@@ -1,0 +1,77 @@
+# ============================================================ Secrets & local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+secrets/
+.azure/
+
+# ============================================================ Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.prof
+
+# ============================================================ Node / Next.js
+node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+*.tsbuildinfo
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+.vercel/
+
+# ============================================================ Touchline generated data
+# Match cache (events + tracking), regenerated on first run
+.cache/
+# Full per-match event streams for the season (large; publish via the dataset-release workflow)
+data/season/events/
+data/samples/
+data/*.zip
+# Bicep build output
+infra/*.json
+!infra/main.parameters.json
+
+# ============================================================ OS & editors
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/mcp.json
+!.vscode/extensions.json
+
+# ============================================================ Logs & temp
+*.log
+logs/
+tmp/
+temp/
+*.tmp
