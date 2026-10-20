@@ -217,6 +217,10 @@ export interface Status {
   model_reasoning: string;
   totals: { calls: number; tokens_in: number; tokens_out: number; cost_usd: number; rejections: number; retries: number; fallbacks: number };
   pending_moments: number;
+  llm_mode?: string;
+  budget_usd?: number;
+  over_budget?: boolean;
+  insight_latency_ms?: { n: number; p50: number; p95: number };
 }
 
 export interface Frame {
