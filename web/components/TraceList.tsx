@@ -9,7 +9,7 @@ export default function TraceList({ traces, limit = 120, filter }: { traces: Tra
         <div className="trace" key={t.trace_id}>
           <span className="when">{Math.floor(t.started_at / 60) + 1}&apos;</span>
           <span className="who">
-            <span className={`status-${t.status}`}>●</span> {t.agent}
+            <span className={`status-${t.status}`} style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "currentColor", marginRight: 6, verticalAlign: "middle" }} />{t.agent}
           </span>
           <span className="what" title={t.detail}>
             <span style={{ fontWeight: 600 }}>{t.action}</span>
