@@ -1,0 +1,37 @@
+// Microsoft Fabric Real-Time Intelligence: Eventstream (source: Event Hubs `match-events`,
+// consumer group `fabric`) → Eventhouse table `events`. Paste these into a KQL queryset.
+
+// 1. Table mapping (run once)
+.create-merge table events (
+    event_id: string, match_id: string, seq: long, possession_id: long, t: real, period: int,
+    minute: int, second: int, duration: real, type: string, team: string, player_id: string,
+    recipient_id: string, x: real, y: real, end_x: real, end_y: real, outcome: string,
+    pass_type: string, body_part: string, under_pressure: bool, opponents_in_lane: int, speed_kmh: real)
+
+// 2. Live pass completion by team, per 5 minutes
+events
+| where type == "pass"
+| summarize passes = count(), completed = countif(outcome == "complete") by match_id, team, bin_at(minute, 5, 0)
+| extend completion_pct = round(100.0 * completed / passes, 1)
+| order by match_id, minute asc
+
+// 3. Pressing map: where each team wins the ball back (tackles + interceptions)
+events
+| where type in ("tackle", "interception")
+| extend zone_x = bin(iff(team == "home", x, 105 - x), 15), zone_y = bin(iff(team == "home", y, 68 - y), 17)
+| summarize regains = count() by match_id, team, zone_x, zone_y
+
+// 4. Shot speed leaderboard
+events
+| where type == "shot"
+| summarize top_speed_kmh = max(speed_kmh), shots = count(), goals = countif(outcome == "goal") by match_id, player_id
+| top 10 by top_speed_kmh
+
+// 5. Turnover rate (chaos proxy) per minute
+events
+| where type in ("pass", "carry", "shot", "dribble")
+| order by match_id, seq asc
+| extend prev_team = prev(team), prev_match = prev(match_id)
+| where match_id == prev_match and team != prev_team
+| summarize turnovers = count() by match_id, minute
+| render timechart
