@@ -1,0 +1,27 @@
+name: dataset-release
+
+# Regenerates the synthetic season and publishes it as a GitHub Release asset (via the GitHub CLI).
+on:
+  workflow_dispatch:
+    inputs:
+      matchdays: { description: "Matchdays to simulate", default: "38" }
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -e "./backend"
+      - run: cd backend && python -m touchline.cli season --matchdays ${{ inputs.matchdays }} --events
+      - run: cd data && zip -qr touchline-season.zip season
+      - env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          tag="dataset-$(date +%Y%m%d-%H%M)"
+          gh release create "$tag" data/touchline-season.zip \
+            --title "Touchline synthetic season ($tag)" \
+            --notes "380 fictional matches: full event streams, results, player totals and tables. All clubs and players are invented."
