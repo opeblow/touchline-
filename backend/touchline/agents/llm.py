@@ -128,8 +128,28 @@ class LLM:
 
         key = (tier, name)
         if key not in self._agents:
-            self._agents[key] = Agent(client=self._clients[tier], name=name, instructions=instructions)
+            s = self.settings
+            from touchline.foundry_ops import AGENT_TIERS, foundry_agent_name
+
+            if self.provider == "foundry" and s.foundry_hosted_agents and name in AGENT_TIERS:
+                # Managed in Foundry: instructions and model are versioned in the Foundry project.
+                from agent_framework.foundry import FoundryAgent
+                from azure.identity import DefaultAzureCredential
+
+                self._agents[key] = FoundryAgent(
+                    project_endpoint=s.foundry_project_endpoint,
+                    agent_name=foundry_agent_name(name),
+                    credential=DefaultAzureCredential(),
+                )
+            else:
+                self._agents[key] = Agent(client=self._clients[tier], name=name, instructions=instructions)
         return self._agents[key]
+
+    @property
+    def mode(self) -> str:
+        if self.provider == "foundry" and self.settings.foundry_hosted_agents:
+            return "foundry-hosted-agents"
+        return self.provider
 
     def _price(self, tier: Tier, tin: int, tout: int) -> float:
         s = self.settings
