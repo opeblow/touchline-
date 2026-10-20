@@ -412,6 +412,115 @@ resource seasonJob 'Microsoft.App/jobs@2024-03-01' = {
   dependsOn: [ acrPull ]
 }
 
+// ---------------------------------------------------------------- Azure Functions (Flex Consumption, keyless)
+resource functionsConsumer 'Microsoft.EventHub/namespaces/eventhubs/consumergroups@2024-01-01' = {
+  parent: matchEvents
+  name: 'functions'
+}
+
+resource eventsArchive 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+  parent: cosmosDb
+  name: 'events'
+  properties: {
+    resource: {
+      id: 'events'
+      partitionKey: { paths: [ '/match_id' ], kind: 'Hash' }
+      defaultTtl: 7776000
+    }
+  }
+}
+
+resource funcStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: 'stfn${take(token, 18)}'
+  location: location
+  tags: tags
+  kind: 'StorageV2'
+  sku: { name: 'Standard_LRS' }
+  properties: { allowSharedKeyAccess: false, minimumTlsVersion: 'TLS1_2', allowBlobPublicAccess: false }
+}
+
+resource funcBlob 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  parent: funcStorage
+  name: 'default'
+}
+
+resource funcDeployContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: funcBlob
+  name: 'deployments'
+}
+
+var storageRoles = [
+  'b7e6dc6d-f1e8-4753-8033-0f276bb0955b' // Storage Blob Data Owner
+  '974c5e8b-45b9-4653-ba55-5f855dd0fb88' // Storage Queue Data Contributor
+  '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3' // Storage Table Data Contributor
+]
+
+resource funcStorageRoles 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for r in storageRoles: {
+  scope: funcStorage
+  name: guid(funcStorage.id, identity.id, r)
+  properties: { principalId: identity.properties.principalId, principalType: 'ServicePrincipal', roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', r) }
+}]
+
+// Lets the nightly timer start the season-regeneration job.
+resource jobOperator 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: seasonJob
+  name: guid(seasonJob.id, identity.id, 'contributor')
+  properties: { principalId: identity.properties.principalId, principalType: 'ServicePrincipal', roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') }
+}
+
+resource funcPlan 'Microsoft.Web/serverfarms@2024-04-01' = {
+  name: 'plan-${name}-fn-${token}'
+  location: location
+  tags: tags
+  kind: 'functionapp'
+  sku: { name: 'FC1', tier: 'FlexConsumption' }
+  properties: { reserved: true }
+}
+
+resource functions 'Microsoft.Web/sites@2024-04-01' = {
+  name: 'func-${name}-${token}'
+  location: location
+  tags: union(tags, { 'azd-service-name': 'functions' })
+  kind: 'functionapp,linux'
+  identity: { type: 'UserAssigned', userAssignedIdentities: { '${identity.id}': {} } }
+  properties: {
+    serverFarmId: funcPlan.id
+    httpsOnly: true
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${funcStorage.properties.primaryEndpoints.blob}deployments'
+          authentication: { type: 'UserAssignedIdentity', userAssignedIdentityResourceId: identity.id }
+        }
+      }
+      scaleAndConcurrency: { maximumInstanceCount: 40, instanceMemoryMB: 2048 }
+      runtime: { name: 'python', version: '3.11' }
+    }
+    siteConfig: {
+      appSettings: [
+        { name: 'AzureWebJobsStorage__accountName', value: funcStorage.name }
+        { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
+        { name: 'AzureWebJobsStorage__clientId', value: identity.properties.clientId }
+        { name: 'EventHubConnection__fullyQualifiedNamespace', value: '${eventHubs.name}.servicebus.windows.net' }
+        { name: 'EventHubConnection__credential', value: 'managedidentity' }
+        { name: 'EventHubConnection__clientId', value: identity.properties.clientId }
+        { name: 'CosmosConnection__accountEndpoint', value: cosmos.properties.documentEndpoint }
+        { name: 'CosmosConnection__credential', value: 'managedidentity' }
+        { name: 'CosmosConnection__clientId', value: identity.properties.clientId }
+        { name: 'EVENTHUB_NAME', value: matchEvents.name }
+        { name: 'COSMOS_DB', value: cosmosDb.name }
+        { name: 'SEASON_JOB_ID', value: seasonJob.id }
+        { name: 'AZURE_CLIENT_ID', value: identity.properties.clientId }
+        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+        { name: 'LOGIC_APP_URL', value: listCallbackUrl('${recapLogicApp.id}/triggers/recap', '2019-05-01').value }
+      ]
+    }
+  }
+  dependsOn: [ funcDeployContainer, funcStorageRoles, functionsConsumer, eventsArchive ]
+}
+
+output functionsName string = functions.name
 output registryLoginServer string = registry.properties.loginServer
 output appUri string = 'https://${app.properties.configuration.ingress.fqdn}'
 output appName string = app.name
