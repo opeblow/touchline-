@@ -446,6 +446,7 @@ class Persona:
             self.rt.llm.online
             and not self.rt.faults.is_killed(self.name)
             and not self.rt.breaker(self.name).is_open
+            and not self.rt.over_budget()
         ):
             try:
                 payload = {
