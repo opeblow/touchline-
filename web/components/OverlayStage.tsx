@@ -123,8 +123,8 @@ export default function OverlayStage({ cues, now, minute, period, score, home, a
               {lower.data.name && <div style={{ ...big, fontSize: 46, textTransform: "uppercase" }}>{lower.data.number} {lower.data.name}</div>}
               {lower.data.in && (
                 <div style={{ fontSize: 28, marginTop: 4 }}>
-                  <span style={{ color: "#6fd3a0" }}>▲ {lower.data.in.name}</span>
-                  <span style={{ color: "#f08a84", marginLeft: 22 }}>▼ {lower.data.out?.name}</span>
+                  <span style={{ color: "#6fd3a0" }}>IN {lower.data.in.name}</span>
+                  <span style={{ color: "#f08a84", marginLeft: 22 }}>OUT {lower.data.out?.name}</span>
                 </div>
               )}
             </div>
