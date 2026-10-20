@@ -193,7 +193,9 @@ def run() -> None:
         "|---|---|---|---|",
     ]
     for k, (passed, rng) in r.get("checks", {}).items():
-        lines.append(f"| {k.replace('_', ' ')} | {r[k]} | {rng[0]}–{rng[1]} | {'✅' if passed else '⚠️'} |")
+        lines.append(
+            f"| {k.replace('_', ' ')} | {r[k]} | {rng[0]}–{rng[1]} | {'PASS' if passed else 'CHECK'} |"
+        )
     lines += [
         "",
         "## 2. Grounding of published text",
