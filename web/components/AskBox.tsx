@@ -40,7 +40,7 @@ export default function AskBox({ matchId, lang }: { matchId: string; lang: strin
           <div style={{ fontWeight: 600, fontSize: 13.5 }}>{x.q}</div>
           <p style={{ margin: "4px 0 6px", fontSize: 14.5 }}>{x.a}</p>
           <div className="row wrap" style={{ gap: 6 }}>
-            <span className="chip green">✓ numbers verified</span>
+            <span className="chip green">Numbers verified</span>
             {x.tools.map((t) => <span key={t} className="chip cite">{t}()</span>)}
             <span className="chip">{x.model}</span>
           </div>
