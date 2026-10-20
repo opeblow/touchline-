@@ -16,7 +16,7 @@ from typing import Any
 
 from touchline.agents.guardian_rules import BLOCKLIST
 
-REACTIONS = {"⚽", "🔥", "😱", "👏", "😤", "🎉", "💙", "🧡", "😂", "🙌"}
+REACTIONS = {"GOAL", "WOW", "CLAP", "COME ON", "NOOO", "HAHA", "UNREAL", "REF!"}
 POINTS_CORRECT = 10
 
 
