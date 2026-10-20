@@ -12,17 +12,43 @@ Instructions for AI coding agents (Claude Code, GitHub Copilot agent mode and ot
 ## Layout
 ```
 backend/touchline/
-  models.py           typed contracts (source of truth for web/lib/types.ts)
-  sim/                engine.py (events), tracking.py (5 Hz physics), league.py, scenario.py, shape.py
-  stats/              engine.py (incremental stats + facts + triggers), models.py (xG, pass difficulty, threat)
-  intel/              moments.py (Moment Spotter), overlay.py (cues), analysis.py (offline pass)
-  agents/             workflow.py (Agent Framework graph), specialists.py, runtime.py (timeouts, breakers,
-                      faults, traces), guardian_rules.py, templates.py, context.py, ask.py, llm.py, prompts/*.md
-  live/               session.py (orchestration), bus.py (queue | Event Hubs), hub.py (WS | Web PubSub), catalog.py
-  api/main.py         FastAPI: REST, WebSocket, A2A mount, static web
-  mcp_server.py, a2a_server.py, season.py, evals.py, search_index.py, cli.py
-web/                  Next.js 16 static export (app/, components/, lib/)
-infra/                Bicep (azd), fabric/queries.kql
+├── models.py            typed contracts (source of truth for web/lib/types.ts)
+├── sim/
+│   ├── engine.py        event simulator
+│   ├── tracking.py      5 Hz tracking physics
+│   ├── league.py        fictional clubs and players
+│   ├── scenario.py      scripted scenarios
+│   └── shape.py         team shapes
+├── stats/
+│   ├── engine.py        incremental stats, facts and triggers
+│   └── models.py        xG, pass difficulty, threat
+├── intel/
+│   ├── moments.py       Moment Spotter
+│   ├── overlay.py       overlay cues
+│   └── analysis.py      offline analysis pass
+├── agents/
+│   ├── workflow.py      Agent Framework graph and human review
+│   ├── specialists.py   explainer, narrator, persona, producer, tactician, memory
+│   ├── runtime.py       timeouts, circuit breakers, faults, traces
+│   ├── guardian_rules.py
+│   ├── templates.py
+│   ├── context.py
+│   ├── ask.py
+│   ├── llm.py
+│   └── prompts/*.md
+├── live/
+│   ├── session.py       orchestration
+│   ├── bus.py           queue or Event Hubs
+│   ├── hub.py           WebSocket or Web PubSub
+│   ├── party.py         watch party
+│   └── catalog.py
+├── api/main.py          FastAPI: REST, WebSocket, A2A mount, static web
+└── mcp_server.py, a2a_server.py, autoevent.py, season.py, evals.py, search_index.py, cli.py
+web/
+├── app/                 Next.js pages (static export)
+├── components/
+└── lib/
+infra/                   Bicep (azd), fabric/queries.kql
 ```
 
 ## Commands
