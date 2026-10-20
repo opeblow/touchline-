@@ -497,6 +497,15 @@ def write_report(seconds: float) -> None:
     for area, name, ok, detail in RESULTS:
         lines.append(f"| {area} | {name} | {'PASS' if ok else 'FAIL'} | {detail.replace('|', '/')} |")
     (out / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if os.environ.get("GITHUB_ACTIONS"):
+        # Surface failures as annotations and the full table as the job summary.
+        for area, name, ok, detail in RESULTS:
+            if not ok:
+                print(f"::error title=E2E {area}::{name}: {detail.replace(chr(10), ' ')[:400]}")
+        summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary:
+            with open(summary, "a", encoding="utf-8") as f:
+                f.write("\n".join(lines) + "\n")
     print(f"\n{passed}/{len(RESULTS)} passed → docs/e2e/report.md")
 
 
