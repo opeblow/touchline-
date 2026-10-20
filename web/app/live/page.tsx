@@ -202,13 +202,13 @@ function Live() {
           <div className="row wrap" style={{ gap: 8 }}>
             {!live && !finished && (
               <button className="btn green" onClick={() => control(status?.status === "paused" ? "resume" : "start", 8)}>
-                {status?.status === "paused" ? "Resume" : "▶ Kick off"}
+                {status?.status === "paused" ? "Resume" : "Kick off"}
               </button>
             )}
             {live && <button className="btn secondary" onClick={() => control("pause")}>Pause</button>}
             {finished && <button className="btn green" onClick={() => control("restart").then(() => control("start", 8))}>Replay match</button>}
             <button className={`btn ${sound ? "" : "secondary"}`} onClick={toggleSound} title="Crowd, whistle and spoken commentary">
-              {sound ? "🔊 Sound on" : "🔇 Turn on sound"}
+              {sound ? "Sound on" : "Turn on sound"}
             </button>
             <div className="seg" aria-label="Replay speed">
               {SPEEDS.map((s) => (
@@ -237,7 +237,7 @@ function Live() {
                   <FloatingReactions reactions={state.party.reactions} />
                   {state.commentary.length > 0 && (
                     <div key={state.commentary[state.commentary.length - 1].line_id} className="fade-in" style={{ position: "absolute", left: 14, bottom: 14, maxWidth: "70%", background: "rgba(10,14,12,0.82)", color: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: 14, borderLeft: "4px solid var(--signal)" }}>
-                      🎙 {state.commentary[state.commentary.length - 1].text}
+                      {state.commentary[state.commentary.length - 1].text}
                     </div>
                   )}
                 </div>
