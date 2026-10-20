@@ -1,0 +1,55 @@
+{
+  "realism": {
+    "matches": 380,
+    "goals_per_match": 2.91,
+    "shots_per_match": 25.1,
+    "xg_per_shot": 0.13,
+    "home_win_pct": 45.8,
+    "draw_pct": 22.1,
+    "checks": {
+      "goals_per_match": [
+        true,
+        [
+          2.5,
+          3.0
+        ]
+      ],
+      "shots_per_match": [
+        true,
+        [
+          22,
+          28
+        ]
+      ],
+      "xg_per_shot": [
+        true,
+        [
+          0.09,
+          0.14
+        ]
+      ],
+      "home_win_pct": [
+        true,
+        [
+          40,
+          48
+        ]
+      ],
+      "draw_pct": [
+        true,
+        [
+          22,
+          30
+        ]
+      ]
+    }
+  },
+  "grounding": {
+    "texts": 1920,
+    "grounded": 1920,
+    "grounded_pct": 100.0
+  },
+  "single_vs_multi": {
+    "skipped": "No model configured. Set FOUNDRY_PROJECT_ENDPOINT (or Azure OpenAI) and rerun."
+  }
+}
