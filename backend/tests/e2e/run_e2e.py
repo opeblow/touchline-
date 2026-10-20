@@ -179,7 +179,7 @@ async def run_all(c: httpx.AsyncClient, base: str) -> None:
                 await asyncio.sleep(0.3)
                 await ws.send(json.dumps({"type": "predict", "pick": party[1]}))
                 await ws.send(json.dumps({"type": "chat", "text": f"{party[0]} is here"}))
-                await ws.send(json.dumps({"type": "react", "emoji": "🔥"}))
+                await ws.send(json.dumps({"type": "react", "emoji": "WOW"}))
             while not stop.is_set():
                 try:
                     raw = await asyncio.wait_for(ws.recv(), timeout=1)
@@ -483,7 +483,7 @@ def write_report(seconds: float) -> None:
         "|---|---|---|---|",
     ]
     for area, name, ok, detail in RESULTS:
-        lines.append(f"| {area} | {name} | {'✅' if ok else '❌'} | {detail.replace('|', '/')} |")
+        lines.append(f"| {area} | {name} | {'PASS' if ok else 'FAIL'} | {detail.replace('|', '/')} |")
     (out / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"\n{passed}/{len(RESULTS)} passed → docs/e2e/report.md")
 
