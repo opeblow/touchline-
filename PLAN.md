@@ -53,30 +53,30 @@ Touchline is a multi-agent system on Microsoft Foundry and Azure. It works in fi
 
 ```
  ┌──────────────┐   events    ┌──────────────┐   ┌────────────────────────┐
- │  Simulator   │───────────▶ │ Event Hubs   │──▶│ Stats Engine (Python)  │ deterministic
+ │  Simulator   │───────────> │ Event Hubs   │──>│ Stats Engine (Python)  │ deterministic
  │ (Data agent) │  JSON/1Hz+  └──────────────┘   │ xG, pass difficulty,   │ numbers only
  └──────────────┘                     │          │ speed, pressure, PPDA, │
                                       │          │ momentum, control idx  │
-                                      ▼          └───────────┬────────────┘
+                                      v          └───────────┬────────────┘
                               Fabric Eventstream             │ match state
-                              (analytics / KQL)              ▼
+                              (analytics / KQL)              v
                                                  ┌────────────────────────┐
                                                  │ Match Blackboard        │ Cosmos DB
                                                  │ (shared agent state)    │ (+ cache)
                                                  └───────────┬────────────┘
                      Microsoft Agent Framework orchestrator │  MCP: match-tools server
    ┌──────────┬───────────┬────────────┬───────────┬────────┴──┬────────────┐
-   ▼          ▼           ▼            ▼           ▼           ▼            ▼
+   v          v           v            v           v           v            v
  Moment    Tactician   Explainer   Narrator   Persona+     Guardian     Producer
  Spotter   (patterns)  (why it     (live      Localizer    (fact-check, (recaps,
  (scores               matters,    lines)     (modes,      safety,      highlight
  moments)              cites IDs)             languages)   retry)       reels)
                                                  │
-                                                 ▼
+                                                 v
                                   Overlay JSON + Fan feed (Azure Web PubSub)
                                                  │
                          ┌───────────────────────┼──────────────────┐
-                         ▼                       ▼                  ▼
+                         v                       v                  v
                     Match Center          Broadcast Overlay     Auto Recap
                     (Next.js)             (1080p, OBS)          (multilingual)
 ```
