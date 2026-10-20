@@ -31,7 +31,16 @@ FOUNDRY_PROJECT_ENDPOINT=https://<your-foundry>.services.ai.azure.com/api/projec
 FOUNDRY_MODEL_FAST=gpt-4.1-mini        # deployment names in your project
 FOUNDRY_MODEL_REASONING=gpt-4.1
 ```
-Restart the API. The Control Room now shows the provider, model, tokens and cost. You can also use Azure OpenAI (`AZURE_OPENAI_ENDPOINT`) or any OpenAI-compatible endpoint (`OPENAI_API_KEY`, `OPENAI_BASE_URL`). See `.env.example`.
+Restart the API. The Control Room now shows the provider, model, tokens and cost.
+
+**Manage the agents in Foundry and evaluate them:**
+```bash
+cd backend
+python -m touchline.foundry_ops register              # publish each prompt as a versioned Foundry prompt agent
+# then set FOUNDRY_HOSTED_AGENTS=true to run those Foundry agents
+python -m touchline.foundry_ops evaluate --limit 12   # Foundry evaluators + Guardian evaluator, baseline vs Touchline
+```
+The evaluation runs appear in the Foundry portal (Evaluations), and a summary is written to `docs/eval/foundry.json`. You can also use Azure OpenAI (`AZURE_OPENAI_ENDPOINT`) or any OpenAI-compatible endpoint (`OPENAI_API_KEY`, `OPENAI_BASE_URL`). See `.env.example`.
 
 ## 4. Deploy to Azure
 ```bash
@@ -49,6 +58,7 @@ azd up
 | AI Translator, AI Content Safety, AI Search | Localization, safety screening, season memory |
 | Logic App | Full-time recap distribution (optional Teams webhook: `azd env set TEAMS_WEBHOOK_URL <url>`) |
 | Container Apps | `app` (API + web), `mcp` (MCP server, scales to zero), Job `season` (regenerates the 380-match season) |
+| Azure Functions (Flex Consumption) | Event Hubs archive to Cosmos DB, phase notifications, nightly season job |
 | ACR, Log Analytics, Application Insights | Images, logs, telemetry |
 
 After the first deploy, load the season memory into AI Search:
@@ -73,7 +83,7 @@ Useful options:
 ## 7. Commands
 ```bash
 cd backend
-pytest -q                                  # 23 tests
+pytest -q                                  # 29 tests
 ruff check touchline tests                 # lint
 python -m touchline.cli eval               # realism + grounding (+ single vs multi with a model) → docs/eval
 python -m touchline.cli season             # regenerate data/season (~2–3 min on 4 cores)
