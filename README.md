@@ -66,30 +66,30 @@ Each item below names its code and the end-to-end check that proves it ([docs/e2
 ## 2. How we use each Microsoft and Azure technology
 
 The **Status** column is precise:
-- ✅ **Verified** means it ran in our tests.
-- ☁️ **Wired** means the code path and infrastructure are written. It activates when the environment variable is set or after `azd up`, and we have not exercised it against a live Azure resource.
+- **Verified** means it ran in our tests.
+- **Wired** means the code path and infrastructure are written. It activates when the environment variable is set or after `azd up`, and we have not exercised it against a live Azure resource.
 
 | Technology | How Touchline uses it | Where | Status |
 |---|---|---|---|
-| **Microsoft Agent Framework: workflows** | Each key moment runs a typed workflow graph. Memory **fans out** to Explainer and Narrator. The Guardian has **conditional edges**: approved → Persona, rejected → back to Explainer for a rewrite with machine-readable reasons, narration → Publisher. A fresh graph per moment means moments run concurrently. | `agents/workflow.py` | ✅ |
-| **Agent Framework: human-in-the-loop** | The Publisher calls **`request_info`** on high-importance moments. The workflow **pauses** until a producer approves, edits or rejects it in the Control Room, then resumes through a `@response_handler`. Human edits are re-verified by the Guardian. | `workflow.py` `PublisherExecutor`, `live/session.py decide()` | ✅ |
-| **Agent Framework: agents and tools** | The "Ask" analyst is an `Agent` with **function tools** over the live stats engine. Every number in its answer must come from a tool output. | `agents/ask.py` | ✅ offline router · ☁️ model path |
-| **Agent Framework: A2A** | The analyst is published as an **A2A agent**, using `A2AExecutor`, an Agent Card and JSON-RPC. We verified interoperability with Agent Framework's own `A2AAgent` client. | `a2a_server.py` (`/a2a/`) | ✅ |
-| **Agent Framework: observability** | `enable_instrumentation()` emits GenAI semantic-convention spans for agents, chat clients and workflows to App Insights and Foundry tracing. Our own per-agent spans carry tokens, latency and cost. | `telemetry.py`, `agents/runtime.py` | ☁️ |
-| **Microsoft Foundry** | `FoundryChatClient` with Entra ID. **Two tiers**: a fast model for explain, narrate and personalise, and a reasoning model for tactics and recaps. `azd up` creates the Foundry account, the project and both model deployments. Prompts are versioned in `agents/prompts/*.md`. The eval harness compares a **single agent vs the multi-agent pipeline** on numeric accuracy, latency and cost. | `agents/llm.py`, `infra/resources.bicep`, `evals.py` | ☁️ (offline fallback ✅) |
-| **MCP** | `touchline-mcp` exposes 10 tools (match_state, key_moments, events, player, fact, ask, agent_status, generate_match, …) to GitHub Copilot, Claude or any MCP client. It runs over stdio or streamable HTTP as its own Container App. | `mcp_server.py`, `.vscode/mcp.json` | ✅ |
-| **Azure Event Hubs** | Live event ingest, partitioned per match. The consumer attaches before the feed starts so no event is lost. A `fabric` consumer group feeds analytics. | `live/bus.py` | ☁️ (local bus ✅) |
-| **Azure Container Apps (+ Jobs)** | `app` (API + web), `mcp` (scales to zero), and a **Job** that regenerates the 380-match season on demand. Health probes, user-assigned managed identity, pulls from ACR without keys. | `infra/resources.bicep` | ☁️ (Bicep compiles ✅) |
-| **Azure Cosmos DB** | The **Match Blackboard**, the shared state between agents. It doubles as the **audit trail** of every Guardian check, human review and published insight. Serverless, RBAC-only. | `agents/blackboard.py` | ☁️ (in-memory ✅) |
-| **Azure Web PubSub** | Realtime fan-out with a group per match and per personalisation key, so each viewer only receives their own variant. | `live/hub.py` | ☁️ (WebSocket ✅) |
-| **Azure AI Content Safety** | Screens every published sentence and every watch-party chat message. A local block list always applies too. | `azure_services.py`, `live/party.py` | ☁️ (local screen ✅) |
-| **Azure AI Translator** | Any-language localisation. Player and club names are wrapped in `notranslate` so they are never translated. | `azure_services.py`, `Persona` | ☁️ |
-| **Azure AI Search** | Season memory: one document per player per matchday, so the Memory agent can answer "league goals before kick-off" with a single key lookup. | `search_index.py`, `MemoryAgent` | ☁️ (local store ✅) |
-| **Azure Logic Apps** | Distributes the full-time recap, for example to a Microsoft Teams channel. | `infra/resources.bicep`, `session._distribute` | ☁️ |
-| **Microsoft Fabric** | Eventstream (Event Hubs, `fabric` group) → Eventhouse. The KQL queryset covers pass completion, pressing maps, a shot-speed leaderboard and turnover rate. | `infra/fabric/queries.kql` | ☁️ |
-| **Application Insights / Azure Monitor** | OpenTelemetry for agents, workflows and the API. The Control Room shows the same data live: calls, latency, tokens, cost, rejections and fallbacks. | `telemetry.py` | ☁️ (Control Room ✅) |
-| **Microsoft Entra ID** | Keyless managed identity for every Azure service. **Sign in with Microsoft** (MSAL) for the watch party. | `infra/`, `web/components/WatchParty.tsx` | ☁️ (needs an app registration id) |
-| **GitHub Copilot / Actions / CLI** | `.github/copilot-instructions.md`, a reusable prompt file and an MCP config for Copilot agent mode. The CI workflow runs lint, tests, eval, the web build and a Bicep build. Deploy uses OIDC (no secrets). A dataset release workflow publishes the season with `gh release`. | `.github/` | ✅ files · ☁️ runs on push |
+| **Microsoft Agent Framework: workflows** | Each key moment runs a typed workflow graph. Memory **fans out** to Explainer and Narrator. The Guardian has **conditional edges**: approved → Persona, rejected → back to Explainer for a rewrite with machine-readable reasons, narration → Publisher. A fresh graph per moment means moments run concurrently. | `agents/workflow.py` | Verified |
+| **Agent Framework: human-in-the-loop** | The Publisher calls **`request_info`** on high-importance moments. The workflow **pauses** until a producer approves, edits or rejects it in the Control Room, then resumes through a `@response_handler`. Human edits are re-verified by the Guardian. | `workflow.py` `PublisherExecutor`, `live/session.py decide()` | Verified |
+| **Agent Framework: agents and tools** | The "Ask" analyst is an `Agent` with **function tools** over the live stats engine. Every number in its answer must come from a tool output. | `agents/ask.py` | Verified offline router · Wired model path |
+| **Agent Framework: A2A** | The analyst is published as an **A2A agent**, using `A2AExecutor`, an Agent Card and JSON-RPC. We verified interoperability with Agent Framework's own `A2AAgent` client. | `a2a_server.py` (`/a2a/`) | Verified |
+| **Agent Framework: observability** | `enable_instrumentation()` emits GenAI semantic-convention spans for agents, chat clients and workflows to App Insights and Foundry tracing. Our own per-agent spans carry tokens, latency and cost. | `telemetry.py`, `agents/runtime.py` | Wired |
+| **Microsoft Foundry** | `FoundryChatClient` with Entra ID. **Two tiers**: a fast model for explain, narrate and personalise, and a reasoning model for tactics and recaps. `azd up` creates the Foundry account, the project and both model deployments. Prompts are versioned in `agents/prompts/*.md`. The eval harness compares a **single agent vs the multi-agent pipeline** on numeric accuracy, latency and cost. | `agents/llm.py`, `infra/resources.bicep`, `evals.py` | Wired (offline fallback Verified) |
+| **MCP** | `touchline-mcp` exposes 10 tools (match_state, key_moments, events, player, fact, ask, agent_status, generate_match, …) to GitHub Copilot, Claude or any MCP client. It runs over stdio or streamable HTTP as its own Container App. | `mcp_server.py`, `.vscode/mcp.json` | Verified |
+| **Azure Event Hubs** | Live event ingest, partitioned per match. The consumer attaches before the feed starts so no event is lost. A `fabric` consumer group feeds analytics. | `live/bus.py` | Wired (local bus Verified) |
+| **Azure Container Apps (+ Jobs)** | `app` (API + web), `mcp` (scales to zero), and a **Job** that regenerates the 380-match season on demand. Health probes, user-assigned managed identity, pulls from ACR without keys. | `infra/resources.bicep` | Wired (Bicep compiles Verified) |
+| **Azure Cosmos DB** | The **Match Blackboard**, the shared state between agents. It doubles as the **audit trail** of every Guardian check, human review and published insight. Serverless, RBAC-only. | `agents/blackboard.py` | Wired (in-memory Verified) |
+| **Azure Web PubSub** | Realtime fan-out with a group per match and per personalisation key, so each viewer only receives their own variant. | `live/hub.py` | Wired (WebSocket Verified) |
+| **Azure AI Content Safety** | Screens every published sentence and every watch-party chat message. A local block list always applies too. | `azure_services.py`, `live/party.py` | Wired (local screen Verified) |
+| **Azure AI Translator** | Any-language localisation. Player and club names are wrapped in `notranslate` so they are never translated. | `azure_services.py`, `Persona` | Wired |
+| **Azure AI Search** | Season memory: one document per player per matchday, so the Memory agent can answer "league goals before kick-off" with a single key lookup. | `search_index.py`, `MemoryAgent` | Wired (local store Verified) |
+| **Azure Logic Apps** | Distributes the full-time recap, for example to a Microsoft Teams channel. | `infra/resources.bicep`, `session._distribute` | Wired |
+| **Microsoft Fabric** | Eventstream (Event Hubs, `fabric` group) → Eventhouse. The KQL queryset covers pass completion, pressing maps, a shot-speed leaderboard and turnover rate. | `infra/fabric/queries.kql` | Wired |
+| **Application Insights / Azure Monitor** | OpenTelemetry for agents, workflows and the API. The Control Room shows the same data live: calls, latency, tokens, cost, rejections and fallbacks. | `telemetry.py` | Wired (Control Room Verified) |
+| **Microsoft Entra ID** | Keyless managed identity for every Azure service. **Sign in with Microsoft** (MSAL) for the watch party. | `infra/`, `web/components/WatchParty.tsx` | Wired (needs an app registration id) |
+| **GitHub Copilot / Actions / CLI** | `.github/copilot-instructions.md`, a reusable prompt file and an MCP config for Copilot agent mode. The CI workflow runs lint, tests, eval, the web build and a Bicep build. Deploy uses OIDC (no secrets). A dataset release workflow publishes the season with `gh release`. | `.github/` | Verified files · Wired runs on push |
 
 ---
 
@@ -168,18 +168,46 @@ cd backend
 ## 6. Repository
 
 ```
-backend/touchline/
-  sim/      simulator, tracking physics, fictional league, scenarios
-  stats/    stats engine, xG / pass-difficulty / threat models
-  intel/    moment detection, overlay cues, offline analysis
-  agents/   Agent Framework workflow, specialists, Guardian, templates, prompts/, ask
-  live/     session orchestration, Event Hubs bus, Web PubSub hub, watch party, catalog
-  api/      FastAPI: REST, WebSocket, A2A mount, static web
-  autoevent.py · mcp_server.py · a2a_server.py · season.py · evals.py · search_index.py · telemetry.py
-web/        Next.js: landing, 3D match center, overlay, control room, recap, studio
-infra/      Bicep for azd, Fabric KQL
-data/       380-match synthetic season
-docs/       e2e report, eval report, screenshots
+touchline/
+├── backend/
+│   ├── pyproject.toml
+│   ├── touchline/
+│   │   ├── sim/              simulator, tracking physics, fictional league, scenarios
+│   │   ├── stats/            stats engine, xG / pass-difficulty / threat models
+│   │   ├── intel/            moment detection, overlay cues, offline analysis
+│   │   ├── agents/           Agent Framework workflow, specialists, Guardian, templates, ask
+│   │   │   └── prompts/      versioned prompts for each agent
+│   │   ├── live/             session orchestration, Event Hubs bus, Web PubSub hub, watch party
+│   │   ├── api/              FastAPI: REST, WebSocket, A2A mount, static web
+│   │   ├── autoevent.py      auto-eventing from synthetic video
+│   │   ├── mcp_server.py     MCP server for Copilot and other clients
+│   │   ├── a2a_server.py     A2A agent card and endpoint
+│   │   ├── season.py         380-match season generator and memory
+│   │   ├── evals.py          realism, grounding, single vs multi-agent
+│   │   └── telemetry.py      OpenTelemetry and Agent Framework instrumentation
+│   └── tests/
+│       ├── test_*.py         unit and integration tests
+│       └── e2e/run_e2e.py    end-to-end suite (80 checks)
+├── web/
+│   ├── app/                  landing, live, overlay, control, recap, studio pages
+│   ├── components/           3D stadium, overlay renderer, feeds, watch party
+│   ├── lib/                  API client, live match hook, audio engine, types
+│   └── public/models/        animated 3D player model
+├── infra/
+│   ├── main.bicep            subscription entry point for azd
+│   ├── resources.bicep       every Azure resource, keyless
+│   └── fabric/queries.kql    Fabric Real-Time Intelligence queries
+├── data/season/              380-match synthetic season
+├── docs/
+│   ├── e2e/report.md         end-to-end report
+│   ├── eval/report.md        evaluation report
+│   └── images/               screenshots
+├── .github/
+│   ├── workflows/            ci, deploy, dataset-release
+│   ├── prompts/              Copilot prompt files
+│   └── copilot-instructions.md
+├── Dockerfile
+└── azure.yaml
 ```
 
 ## 7. Responsible AI
