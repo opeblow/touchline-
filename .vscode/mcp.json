@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "touchline": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/.venv/Scripts/python",
+      "args": ["-m", "touchline.mcp_server"],
+      "env": { "TOUCHLINE_API": "http://localhost:8000" }
+    }
+  }
+}
