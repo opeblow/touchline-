@@ -9,7 +9,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -58,6 +58,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ----------------------------------------------------------------------------- enterprise controls
+
+
+def require_operator(x_touchline_key: str | None = Header(None)) -> None:
+    """Control actions (start, chaos, approvals, generation) need the operator key when one is configured."""
+    if settings.control_api_key and x_touchline_key != settings.control_api_key:
+        raise HTTPException(401, "Operator key required (header x-touchline-key)")
+
+
+OPERATOR = [Depends(require_operator)]
+_ask_hits: dict[str, list[float]] = {}
+
+
+def rate_limit_ask(request: Request) -> None:
+    import time as _t
+
+    key = request.client.host if request.client else "anon"
+    now = _t.time()
+    hits = [h for h in _ask_hits.get(key, []) if now - h < 60]
+    if len(hits) >= settings.ask_rate_per_minute:
+        raise HTTPException(429, "Too many questions; try again in a minute")
+    _ask_hits[key] = hits + [now]
 
 
 # A2A: Touchline's analyst agent, discoverable by other agents at /a2a/.well-known/agent-card.json
@@ -112,10 +136,12 @@ async def health() -> dict[str, Any]:
     return {
         "ok": True,
         "version": __version__,
-        "llm": manager.llm.provider,
+        "llm": manager.llm.mode,
         "hub": hub.kind,
         "mode": settings.touchline_mode,
         "season": get_season_memory().available,
+        "operator_key_required": bool(settings.control_api_key),
+        "budget_usd_per_match": settings.max_cost_per_match_usd,
     }
 
 
@@ -153,7 +179,7 @@ async def list_matches() -> list[dict[str, Any]]:
     return out
 
 
-@app.post("/api/matches")
+@app.post("/api/matches", dependencies=OPERATOR)
 async def create_match(req: CreateMatchRequest) -> dict[str, Any]:
     """Data Studio: generate a new synthetic match, optionally from a natural-language scenario."""
     ids = {t.id for t in build_league()}
@@ -224,7 +250,7 @@ async def match_state(
     return await s.state(sub)
 
 
-@app.post("/api/matches/{match_id}/start")
+@app.post("/api/matches/{match_id}/start", dependencies=OPERATOR)
 async def start(match_id: str, req: StartRequest | None = None) -> dict[str, Any]:
     s = await _session(match_id)
     if s.status == "finished":
@@ -233,40 +259,40 @@ async def start(match_id: str, req: StartRequest | None = None) -> dict[str, Any
     return s.status_dict()
 
 
-@app.post("/api/matches/{match_id}/pause")
+@app.post("/api/matches/{match_id}/pause", dependencies=OPERATOR)
 async def pause(match_id: str) -> dict[str, Any]:
     s = await _session(match_id)
     s.pause()
     return s.status_dict()
 
 
-@app.post("/api/matches/{match_id}/resume")
+@app.post("/api/matches/{match_id}/resume", dependencies=OPERATOR)
 async def resume(match_id: str) -> dict[str, Any]:
     s = await _session(match_id)
     s.resume()
     return s.status_dict()
 
 
-@app.post("/api/matches/{match_id}/speed")
+@app.post("/api/matches/{match_id}/speed", dependencies=OPERATOR)
 async def speed(match_id: str, req: StartRequest) -> dict[str, Any]:
     s = await _session(match_id)
     s.set_speed(req.speed or settings.demo_speed)
     return s.status_dict()
 
 
-@app.post("/api/matches/{match_id}/restart")
+@app.post("/api/matches/{match_id}/restart", dependencies=OPERATOR)
 async def restart(match_id: str) -> dict[str, Any]:
     s = await manager.restart(match_id)
     return s.status_dict()
 
 
-@app.post("/api/matches/{match_id}/chaos")
+@app.post("/api/matches/{match_id}/chaos", dependencies=OPERATOR)
 async def chaos(match_id: str, req: ChaosRequest) -> dict[str, Any]:
     s = await _session(match_id)
     return s.chaos(req.action, req.agent, req.seconds)
 
 
-@app.post("/api/matches/{match_id}/ask")
+@app.post("/api/matches/{match_id}/ask", dependencies=[Depends(rate_limit_ask)])
 async def ask_match(match_id: str, req: AskRequest) -> dict[str, Any]:
     s = await _session(match_id)
     return await ask(s, req.question, req.lang)
@@ -341,7 +367,7 @@ async def reviews(match_id: str) -> dict[str, Any]:
     return {"policy": {"enabled": p.enabled, "min_importance": p.min_importance}, "pending": s.reviews()}
 
 
-@app.post("/api/matches/{match_id}/review-policy")
+@app.post("/api/matches/{match_id}/review-policy", dependencies=OPERATOR)
 async def review_policy(match_id: str, req: ReviewPolicyRequest) -> dict[str, Any]:
     s = await _session(match_id)
     s.agents.review.enabled = req.enabled
@@ -349,7 +375,7 @@ async def review_policy(match_id: str, req: ReviewPolicyRequest) -> dict[str, An
     return {"enabled": req.enabled, "min_importance": req.min_importance}
 
 
-@app.post("/api/matches/{match_id}/reviews/{request_id}")
+@app.post("/api/matches/{match_id}/reviews/{request_id}", dependencies=OPERATOR)
 async def review_decide(match_id: str, request_id: str, req: ReviewDecisionRequest) -> dict[str, Any]:
     s = await _session(match_id)
     try:
@@ -585,7 +611,18 @@ async def ws_match(
             elif getattr(client, "member_id", None) and client.member_id in session.party.members:
                 member = session.party.members[client.member_id]
                 kind = body.get("type")
-                if kind == "chat":
+                if kind == "chat" and session.party.throttled(member, settings.chat_min_interval_s):
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "kind": "party",
+                                "match_id": match_id,
+                                "t": session.t,
+                                "data": {"type": "blocked", "reason": "Slow down a little"},
+                            }
+                        )
+                    )
+                elif kind == "chat":
                     ok, text = session.party.screen(str(body.get("text", "")))
                     if ok and safety.enabled:
                         ok, cats = await safety.screen(text, threshold=2)
