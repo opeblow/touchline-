@@ -6,7 +6,7 @@ import AgentGraph from "@/components/AgentGraph";
 import Nav from "@/components/Nav";
 import ScoreBug from "@/components/ScoreBug";
 import TraceList from "@/components/TraceList";
-import { api, post } from "@/lib/api";
+import { api, post, setOperatorKey } from "@/lib/api";
 import { useMatch, type Prefs } from "@/lib/useMatch";
 import type { AgentStatus } from "@/lib/types";
 
@@ -67,6 +67,21 @@ function ProducerReview({ matchId }: { matchId: string }) {
         {last && <span className="chip signal" style={{ height: "auto", padding: "5px 10px", whiteSpace: "normal" }}>Last decision: {last}</span>}
       </div>
     </div>
+  );
+}
+
+function OperatorKey() {
+  const [need, setNeed] = useState(false);
+  const [val, setVal] = useState("");
+  useEffect(() => {
+    api("/api/health").then((h) => setNeed(!!h.operator_key_required)).catch(() => undefined);
+  }, []);
+  if (!need) return <span className="chip">Operator key: not required (demo)</span>;
+  return (
+    <span className="row" style={{ gap: 6 }}>
+      <input className="input" type="password" placeholder="Operator key" value={val} onChange={(e) => setVal(e.target.value)} style={{ height: 28, width: 160 }} />
+      <button className="btn small secondary" onClick={() => setOperatorKey(val)}>Save key</button>
+    </span>
   );
 }
 
@@ -150,6 +165,8 @@ function Control() {
             <Stat k="Fallbacks" v={totals?.fallbacks ?? 0} />
             <Stat k="Tokens" v={(totals ? totals.tokens_in + totals.tokens_out : 0).toLocaleString()} />
             <Stat k="Cost this match" v={`$${(totals?.cost_usd ?? 0).toFixed(4)}`} />
+            <Stat k="Insight latency p50 / p95" v={`${(state.status?.insight_latency_ms?.p50 ?? 0).toFixed(0)} / ${(state.status?.insight_latency_ms?.p95 ?? 0).toFixed(0)} ms`} />
+            <Stat k="Budget" v={`$${(state.status?.budget_usd ?? 0).toFixed(2)}`} tone={state.status?.over_budget ? "var(--danger)" : undefined} />
           </div>
           <div className="row wrap" style={{ gap: 8, marginTop: 14, fontSize: 12.5 }}>
             <span className="chip">LLM: {state.status?.llm === "offline" ? "offline templates" : `${state.status?.llm} · ${state.status?.model_fast} / ${state.status?.model_reasoning}`}</span>
@@ -157,6 +174,8 @@ function Control() {
             <span className="chip">Realtime: {state.status?.hub}</span>
             <span className="chip">Workflow: Microsoft Agent Framework</span>
             <span className="chip">{state.status?.pending_moments ?? 0} moments in flight</span>
+            <span className="chip">Mode: {state.status?.llm_mode ?? state.status?.llm}</span>
+            <OperatorKey />
           </div>
         </div>
 
