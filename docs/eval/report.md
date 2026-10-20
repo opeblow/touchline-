@@ -4,11 +4,11 @@
 
 | Metric | Touchline | Reference range | Pass |
 |---|---|---|---|
-| goals per match | 2.91 | 2.5–3.0 | ✅ |
-| shots per match | 25.1 | 22–28 | ✅ |
-| xg per shot | 0.13 | 0.09–0.14 | ✅ |
-| home win pct | 45.8 | 40–48 | ✅ |
-| draw pct | 22.1 | 22–30 | ✅ |
+| goals per match | 2.91 | 2.5–3.0 | PASS |
+| shots per match | 25.1 | 22–28 | PASS |
+| xg per shot | 0.13 | 0.09–0.14 | PASS |
+| home win pct | 45.8 | 40–48 | PASS |
+| draw pct | 22.1 | 22–30 | PASS |
 
 ## 2. Grounding of published text
 
