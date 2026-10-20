@@ -85,6 +85,15 @@ class Party:
             return False, "Message blocked by the safety screen"
         return True, text
 
+    def throttled(self, member: Member, min_interval_s: float) -> bool:
+        """Per-member chat rate limit."""
+        now = time.time()
+        last = getattr(member, "_last_chat", 0.0)
+        if now - last < min_interval_s:
+            return True
+        member._last_chat = now  # type: ignore[attr-defined]
+        return False
+
     def add_chat(self, member: Member, text: str, minute: int) -> dict[str, Any]:
         msg = {
             "id": uuid.uuid4().hex[:8],
