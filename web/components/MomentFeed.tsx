@@ -46,7 +46,7 @@ export default function MomentFeed({ matchId, moments, insights, personalized, l
               <span className={`chip ${m.type === "goal" ? "green" : m.type === "red_card" ? "danger" : m.importance >= 60 ? "signal" : ""}`}>
                 {MOMENT_LABEL[m.type] ?? m.type}
               </span>
-              {m.facts.some((f) => highlightKinds.includes(f.kind)) && <span className="chip dark" title="Involves the metric you pinned">★ your metric</span>}
+              {m.facts.some((f) => highlightKinds.includes(f.kind)) && <span className="chip dark" title="Involves the metric you pinned">Your metric</span>}
               {i?.fallback && <span className="chip" title="Model unavailable or rejected; verified template used">template</span>}
               {i && i.attempts > 1 && <span className="chip signal" title="Guardian rejected the first draft">rewritten ×{i.attempts - 1}</span>}
               <span className="faint mono" style={{ marginLeft: "auto", fontSize: 11 }}>{m.importance}</span>
