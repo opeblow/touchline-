@@ -405,6 +405,18 @@ async def run_all(c: httpx.AsyncClient, base: str) -> None:
         status["totals"],
     )
 
+    st_final = (await c.get("/api/matches/demo")).json()["status"]
+    lat = st_final.get("insight_latency_ms", {})
+    check("Enterprise", "latency SLO measured (moment to published insight)", lat.get("n", 0) > 10, lat)
+    check(
+        "Enterprise",
+        "per-match spend cap active",
+        st_final.get("budget_usd", 0) > 0 and not st_final.get("over_budget"),
+        {"budget_usd": st_final.get("budget_usd"), "cost": st_final["totals"]["cost_usd"]},
+    )
+    variants = sum(1 for m in allmsgs if m["kind"] == "personalized")
+    check("Personalise", "personalised variants delivered", variants > 100, variants)
+
     # ------------------------------------------------------------ fact traceability
     if insights:
         fid = insights[-1]["cited_fact_ids"][0]
