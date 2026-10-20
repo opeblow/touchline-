@@ -1,10 +1,9 @@
 name: deploy
 
+# Manual only: run it from the Actions tab after configuring the Azure repository variables
+# (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_ENV_NAME, AZURE_LOCATION).
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ["backend/**", "web/**", "infra/**", "Dockerfile", "azure.yaml"]
 
 permissions:
   id-token: write
@@ -13,6 +12,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ vars.AZURE_CLIENT_ID != '' }}
     environment: production
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
