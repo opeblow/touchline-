@@ -188,7 +188,7 @@ export default function Home() {
                   <p style={{ fontSize: 18, lineHeight: 1.55, margin: 0, color: "var(--ink-2)" }} lang={lang}>{clip.modes[mode].text}</p>
                   <div className="row wrap" style={{ gap: 6, marginTop: 16 }} dir="ltr">
                     {clip.modes[mode].cited.map((id) => (
-                      <span key={id} className="chip cite" title={clip.facts[id]?.label}>⌁ {id} · {clip.facts[id]?.display}</span>
+                      <span key={id} className="chip cite" title={clip.facts[id]?.label}>{id} · {clip.facts[id]?.display}</span>
                     ))}
                   </div>
                 </div>
