@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MatchMeta } from "@/lib/types";
 import type { PartyState } from "@/lib/useMatch";
 
-const REACTIONS = ["⚽", "🔥", "😱", "👏", "😤", "🎉", "🙌", "😂"];
+const REACTIONS = ["GOAL", "WOW", "CLAP", "COME ON", "NOOO", "HAHA", "UNREAL", "REF!"];
 const ENTRA_CLIENT_ID = process.env.NEXT_PUBLIC_ENTRA_CLIENT_ID || "";
 const KEY = "touchline.identity";
 
@@ -176,7 +176,7 @@ export default function WatchParty({ party, send, connected, meta }: {
 
       {/* chat */}
       <div ref={chatRef} className="scroll" style={{ maxHeight: 260, minHeight: 120, padding: "8px 16px" }}>
-        {party.chat.length === 0 && <div className="muted" style={{ fontSize: 13, padding: "8px 0" }}>Say something to the other fans 👋</div>}
+        {party.chat.length === 0 && <div className="muted" style={{ fontSize: 13, padding: "8px 0" }}>Say something to the other fans.</div>}
         {party.chat.map((c) => (
           <div key={c.id} className="row" style={{ gap: 8, alignItems: "flex-start", padding: "5px 0" }}>
             <Avatar m={c.member} size={24} />
@@ -190,7 +190,7 @@ export default function WatchParty({ party, send, connected, meta }: {
       <div style={{ padding: "8px 16px 14px", borderTop: "1px solid var(--line)" }} className="stack">
         <div className="row wrap" style={{ gap: 4 }}>
           {REACTIONS.map((e) => (
-            <button key={e} onClick={() => send({ type: "react", emoji: e })} style={{ fontSize: 20, background: "var(--paper-2)", border: "1px solid var(--line)", borderRadius: 10, width: 38, height: 36, cursor: "pointer" }} aria-label={`React ${e}`}>{e}</button>
+            <button key={e} onClick={() => send({ type: "react", emoji: e })} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.04em", background: "var(--paper-2)", border: "1px solid var(--line)", borderRadius: 999, padding: "0 10px", height: 30, cursor: "pointer" }} aria-label={`React ${e}`}>{e}</button>
           ))}
         </div>
         <form className="row" style={{ gap: 6 }} onSubmit={(e) => { e.preventDefault(); if (text.trim()) { send({ type: "chat", text }); setText(""); } }}>
@@ -216,7 +216,7 @@ export function FloatingReactions({ reactions }: { reactions: { id: string; emoj
         const left = 10 + (parseInt(r.id.slice(0, 4), 36) % 80);
         return (
           <div key={r.id} style={{ position: "absolute", left: `${left}%`, bottom: 10, animation: "floatUp 3.4s ease-out forwards", textAlign: "center" }}>
-            <div style={{ fontSize: 38, filter: "drop-shadow(0 4px 8px rgba(0,0,0,.35))" }}>{r.emoji}</div>
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 26, color: "#fff", background: "var(--pitch)", borderRadius: 10, padding: "4px 12px", boxShadow: "0 6px 16px rgba(0,0,0,.35)" }}>{r.emoji}</div>
             <div style={{ fontSize: 11, color: "#fff", background: "rgba(0,0,0,.45)", borderRadius: 6, padding: "1px 6px" }}>{r.name}</div>
           </div>
         );
