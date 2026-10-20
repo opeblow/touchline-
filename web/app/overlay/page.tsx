@@ -51,7 +51,7 @@ function Overlay() {
       </div>
       {bg !== "transparent" && (status === "ready" || status === "paused") && (
         <button className="btn green" style={{ position: "fixed", bottom: 20, right: 20 }} onClick={() => control(status === "paused" ? "resume" : "start", 8)}>
-          ▶ Start feed
+          Start feed
         </button>
       )}
     </main>
