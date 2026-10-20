@@ -15,7 +15,7 @@ export function wsUrl(path: string): string {
 export async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(API_BASE + path, {
     ...init,
-    headers: { "content-type": "application/json", ...(init?.headers || {}) },
+    headers: { "content-type": "application/json", ...operatorHeader(), ...(init?.headers || {}) },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -26,3 +26,22 @@ export async function api<T = any>(path: string, init?: RequestInit): Promise<T>
 
 export const post = <T = any>(path: string, body?: unknown) =>
   api<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
+
+/** Operator key for control actions (enterprise deployments set CONTROL_API_KEY on the server). */
+export function operatorHeader(): Record<string, string> {
+  try {
+    const k = typeof window !== "undefined" ? localStorage.getItem("touchline.key") : null;
+    return k ? { "x-touchline-key": k } : {};
+  } catch {
+    return {};
+  }
+}
+
+export function setOperatorKey(key: string) {
+  try {
+    if (key) localStorage.setItem("touchline.key", key);
+    else localStorage.removeItem("touchline.key");
+  } catch {
+    /* storage unavailable */
+  }
+}
