@@ -93,6 +93,7 @@ class AgentRuntime:
         emit: Emit,
         clock: Callable[[], float],
         timeout_s: float = 12.0,
+        budget_usd: float = 2.0,
     ) -> None:
         self.match_id = match_id
         self.llm = llm
@@ -100,6 +101,7 @@ class AgentRuntime:
         self.emit = emit
         self.clock = clock  # match clock (seconds of play) for timestamps
         self.timeout_s = timeout_s
+        self.budget_usd = budget_usd
         self.breakers: dict[str, CircuitBreaker] = {}
         self.faults = Faults()
         self.totals = {
@@ -193,6 +195,10 @@ class AgentRuntime:
                 span.set_attribute("touchline.latency_ms", tr.latency_ms)
         return tr
 
+    def over_budget(self) -> bool:
+        """Spend control: once a match's model cost reaches the cap, agents use verified templates."""
+        return self.budget_usd > 0 and self.totals["cost_usd"] >= self.budget_usd
+
     async def guarded(
         self,
         agent: str,
@@ -214,6 +220,8 @@ class AgentRuntime:
             if fallback is None:
                 raise AgentKilled(agent)
             return fallback(), "fallback", "circuit open → template fallback"
+        if self.over_budget() and fallback is not None:
+            return fallback(), "fallback", f"cost budget ${self.budget_usd:.2f} reached → verified template"
         try:
             value = await asyncio.wait_for(fn(), timeout=timeout_s or self.timeout_s)
             breaker.success()
