@@ -1,6 +1,6 @@
 """MatchSession: one live match, end to end.
 
-feed (replay at N× speed) ──▶ bus (queue | Event Hubs) ──▶ ingest
+feed (replay at N× speed) ──> bus (queue | Event Hubs) ──> ingest
     ingest: StatsEngine → overlay cues (instant) → MomentDetector
             → Agent Framework workflow per moment (Memory, Explainer, Narrator,
               Guardian, Persona/Localizer, Publisher) → hub (WebSocket | Web PubSub)
