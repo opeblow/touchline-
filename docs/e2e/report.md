@@ -1,12 +1,12 @@
 # Touchline end-to-end test report
 
-**80 / 80 checks passed** in 162 s (fresh server, offline mode, demo match replayed at 45×).
+**83 / 83 checks passed** in 156 s (fresh server, offline mode, demo match replayed at 45×).
 
 Run it yourself: `cd backend && ../.venv/Scripts/python tests/e2e/run_e2e.py`
 
 | Area | Check | Result | Detail |
 |---|---|---|---|
-| Platform | health | PASS | {'ok': True, 'version': '1.0.0', 'llm': 'offline', 'hub': 'WebSocket', 'mode': 'local', 'season': True} |
+| Platform | health | PASS | {'ok': True, 'version': '1.0.0', 'llm': 'offline', 'hub': 'WebSocket', 'mode': 'local', 'season': True, 'operator_key_required': False, 'budget_usd_per_match': 2.0} |
 | Platform | synthetic season loaded | PASS |  |
 | Data innovation | 20 fictional clubs | PASS | 20 |
 | Data innovation | season table after matchday 29 | PASS | {'pos': 1, 'team': 'brk', 'p': 29, 'w': 16, 'd': 10, 'l': 3, 'gf': 63, 'ga': 41, 'pts': 58, 'form': 'DWDLW'} |
@@ -38,9 +38,9 @@ Run it yourself: `cd backend && ../.venv/Scripts/python tests/e2e/run_e2e.py`
 | Auto-eventing | ball detected from pixels | PASS | 1.0 |
 | Auto-eventing | players detected per frame | PASS | 19.5 |
 | Auto-eventing | passes detected and scored vs truth | PASS | {'passes_truth': 8, 'passes_detected': 2, 'precision': 0.5, 'recall': 0.125, 'median_speed_error_kmh': 2.1} |
-| Live | full match replayed | PASS | 132s wall at 45x |
+| Live | full match replayed | PASS | 133s wall at 45x |
 | Ingest | events streamed live | PASS | 1971 |
-| Render | tracking frames streamed | PASS | 968 |
+| Render | tracking frames streamed | PASS | 998 |
 | Interpret | live stats snapshots | PASS | 128 |
 | Render | overlay cue templates | PASS | ['lower_third', 'moment_card', 'momentum_bar', 'pass_rating', 'player_tag', 'score_bug', 'shot_speed', 'speed_badge', 'stat_compare', 'xg_popup'] |
 | Render | cues timed (t_out > t_in) | PASS | 249 |
@@ -78,6 +78,9 @@ Run it yourself: `cd backend && ../.venv/Scripts/python tests/e2e/run_e2e.py`
 | Enterprise | human review paused and approved via Agent Framework | PASS | ("GOAL — Reece Kettering (Harbour) 18'", 'published') |
 | Enterprise | audit trail for every check | PASS | 176 |
 | Enterprise | per-agent telemetry (calls, latency, errors) | PASS | {'calls': 242, 'tokens_in': 0, 'tokens_out': 0, 'cost_usd': 0.0, 'rejections': 1, 'retries': 1, 'fallbacks': 1} |
+| Enterprise | latency SLO measured (moment to published insight) | PASS | {'n': 29, 'p50': 32.4, 'p95': 60.4} |
+| Enterprise | per-match spend cap active | PASS | {'budget_usd': 2.0, 'cost': 0.0} |
+| Personalise | personalised variants delivered | PASS | 145 |
 | Explain | citation resolves to a fact (+ source events) | PASS | 3-2 |
 | Watch party | join / presence / chat / reactions | PASS | {'welcome': 1, 'presence': 2, 'tally': 2, 'chat': 2, 'react': 2, 'settled': 5} |
 | Watch party | predictions settled by live goals | PASS | [("Reece Kettering (Harbour) 18'", ['Ada']), ("Bram van Leer (Harbour) 37'", [])] |
