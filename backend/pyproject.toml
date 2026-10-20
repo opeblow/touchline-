@@ -29,7 +29,7 @@ azure = [
   "azure-monitor-opentelemetry>=1.6",
 ]
 data = ["pyarrow>=16", "imageio>=2.34", "imageio-ffmpeg>=0.5"]
-dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "azure-functions>=1.21"]
 
 [project.scripts]
 touchline = "touchline.cli:main"
