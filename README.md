@@ -11,8 +11,8 @@ Touchline ingests a live event stream and computes every number deterministicall
 |---|---|
 | **Try it** | `/` landing · `/live?match=demo` match center · `/overlay?match=demo` broadcast overlay · `/control?match=demo` control room · `/recap?match=demo` · `/studio` |
 | **Primary category** | Best Multi-Agent System. Also built for Best Use of Microsoft Foundry, Best Enterprise Solution and Best Azure Cloud Native Integration. |
-| **Verified** | **24/24** unit and integration tests · **80/80** end-to-end checks ([report](docs/e2e/report.md)) · **1,920/1,920** published texts grounded · **5/5** data-realism checks ([eval](docs/eval/report.md)) |
-| **Rules → evidence** | [CRITERIA.md](CRITERIA.md) |
+| **Verified** | **29/29** unit and integration tests · **83/83** end-to-end checks ([report](docs/e2e/report.md)) · **1,920/1,920** published texts grounded · **5/5** data-realism checks ([eval](docs/eval/report.md)) |
+| **Prize criteria → evidence** | [Section 2: how Touchline meets each prize](#2-how-touchline-meets-each-prize) · [CRITERIA.md](CRITERIA.md) |
 
 ---
 
@@ -63,7 +63,50 @@ Each item below names its code and the end-to-end check that proves it ([docs/e2
 
 ---
 
-## 2. How we use each Microsoft and Azure technology
+## 2. How Touchline meets each prize
+
+Every claim below links to code or to a test that runs in CI. "Measured" numbers come from the end-to-end run ([docs/e2e/report.md](docs/e2e/report.md)), which uses offline templates. Model latency adds to those numbers when Foundry is connected.
+
+### Best Multi-Agent System
+| What judges assess | Touchline |
+|---|---|
+| **Specialised agents with distinct roles** | 9 agents with single responsibilities and typed outputs: Moment Spotter, Memory, Explainer, Narrator, **Guardian**, Persona + Localizer, Tactician, Producer and Ask (A2A). See [section 4](#4-the-multi-agent-system). |
+| **Coordination through shared state** | A Match **Blackboard** (Cosmos DB) holds facts, moments, insights, traces and the audit log. Every agent reads verified facts from it and never computes numbers itself. |
+| **Effective handoffs** | A Microsoft Agent Framework workflow: fan-out from Memory to Explainer and Narrator, conditional edges from the Guardian (approved → Persona, rejected → Explainer with machine-readable reasons), and a `request_info` pause for a human producer. A2A exposes the analyst to other agents, and MCP exposes the match to **GitHub Copilot**, which has its own custom agent in this repo. |
+| **Recovers from failures** | Timeouts, circuit breakers, verified fallbacks, a spend cap, and Guardian reject → rewrite. The Control Room's chaos test kills agents or injects a wrong number live. CI proves it: "Guardian caught injected wrong number", "Explainer rewrote after rejection", "killed agent fell back, feed kept flowing". |
+| **Better than a single agent** | A single prompt has no independent check on its own numbers. Touchline's facts come from code, every sentence cites them, and a critic blocks anything else: **1,920/1,920** published texts were grounded. One canonical insight becomes 4 modes × N languages (**145 variants** in one match) with no extra generation per viewer. `foundry_ops evaluate` measures the gap against a single-agent baseline with Foundry evaluators. |
+
+### Best Use of Microsoft Foundry
+| What judges assess | Touchline |
+|---|---|
+| **Accelerates development** | Prompts live as files and are published to Foundry as **versioned prompt agents** in one command (`foundry_ops register`). A producer can change an agent's instructions or model in the portal and roll back, with no redeploy. |
+| **Orchestration and management** | Agent Framework runs the agents (`FoundryChatClient` / `FoundryAgent`) in two model tiers. `enable_instrumentation()` sends agent and workflow spans to Foundry tracing via App Insights. The Control Room shows per-agent calls, latency, tokens and cost. |
+| **Quality you can measure** | Foundry evaluators (groundedness, relevance, coherence, task adherence) plus Touchline's **Guardian as a custom evaluator**, comparing the multi-agent Explainer with a single-agent baseline. The custom evaluator is tested in CI (`test_guardian_as_foundry_evaluator`). |
+| **Scalable AI experiences** | Infrastructure as code creates the Foundry account, project and model deployments (`infra/resources.bicep`). A per-match **spend cap** keeps cost bounded, and personalisation reuses one canonical insight per moment. |
+| **Hard to do without it** | Hosted, versioned agents, built-in evaluators, tracing and model deployments in one project. Building that by hand would need a separate prompt registry, eval service and telemetry pipeline. |
+
+### Best Enterprise Solution
+| What judges assess | Touchline |
+|---|---|
+| **Reliability** | Every agent call has a timeout, circuit breaker and verified fallback. **Latency SLO** (moment → published insight) is tracked live: measured **p50 32 ms, p95 60 ms** offline. There are 29 unit tests and 83 end-to-end checks in CI on every push. |
+| **Transparency** | Every sentence carries clickable citations to facts and their source events. The **audit trail** records every Guardian check, human decision and publication. The live trace stream exports to OpenTelemetry. |
+| **Controls** | **Human-in-the-loop approval** through Agent Framework `request_info`, where human edits are also fact-checked. An **operator key** protects control actions. **Rate limits** apply to Ask and fan chat. A **spend cap** per match. Content Safety screens agent output and fan chat. |
+| **Security** | Keyless: a user-assigned **managed identity** with RBAC for Event Hubs, Cosmos DB, Web PubSub, Content Safety, AI Search, Storage and Foundry. Local auth is disabled where the service allows it. Deploys use OIDC (no stored secrets). |
+| **Path to adoption** | One-command `azd up`. Renderer-agnostic overlay JSON (`/api/schema/overlay`) for any graphics partner. A2A and MCP for integration with other agents and tools. Teams distribution through Logic Apps. Synthetic data only, no PII. |
+| **Long-term impact** | One pipeline serves broadcast graphics, streaming apps and social recaps in any language, with production controls a newsroom needs. |
+
+### Best Azure Cloud Native Integration
+| What judges assess | Touchline |
+|---|---|
+| **Container Apps** | `app` (API + web, health probes) and `mcp` (scale to zero on HTTP), plus a **Container Apps Job** that regenerates the 380-match season. Images are pulled from ACR with managed identity. |
+| **Functions** | A Flex Consumption app. An **Event Hubs trigger** archives every event to Cosmos DB and fires phase notifications. A **timer trigger** starts the season job. An HTTP probe. Bindings are tested in CI (`test_functions_app_bindings`). |
+| **Logic Apps** | Recap and phase distribution to Microsoft Teams. |
+| **Event-driven architecture** | Feed → **Event Hubs** (partitioned per match) → three independent consumers: the live intelligence pipeline, the Functions archive, and the Microsoft Fabric Eventstream. Results reach viewers through **Web PubSub** groups per personalisation key. |
+| **AI-optimised data platforms** | Cosmos DB as the agent blackboard and event archive, AI Search for season memory, Fabric Eventhouse with KQL for match analytics. |
+| **Automation and operational excellence** | Everything is in Bicep with `azd`. CI covers lint, tests, eval, the web build, Bicep and end-to-end. Deploys use OIDC, the season job runs on a schedule, and telemetry goes to App Insights. |
+| **Measurable business impact** | 1 match → about 1,900 events, 249 timed overlay cues, 29 explained moments and 145 personalised variants in 6 languages, with zero unverified numbers. Spend is capped per match, and latency is reported live. |
+
+## 3. How we use each Microsoft and Azure technology
 
 The **Status** column is precise:
 - **Verified** means it ran in our tests.
@@ -76,7 +119,7 @@ The **Status** column is precise:
 | **Agent Framework: agents and tools** | The "Ask" analyst is an `Agent` with **function tools** over the live stats engine. Every number in its answer must come from a tool output. | `agents/ask.py` | Verified offline router · Wired model path |
 | **Agent Framework: A2A** | The analyst is published as an **A2A agent**, using `A2AExecutor`, an Agent Card and JSON-RPC. We verified interoperability with Agent Framework's own `A2AAgent` client. | `a2a_server.py` (`/a2a/`) | Verified |
 | **Agent Framework: observability** | `enable_instrumentation()` emits GenAI semantic-convention spans for agents, chat clients and workflows to App Insights and Foundry tracing. Our own per-agent spans carry tokens, latency and cost. | `telemetry.py`, `agents/runtime.py` | Wired |
-| **Microsoft Foundry** | `FoundryChatClient` with Entra ID. **Two tiers**: a fast model for explain, narrate and personalise, and a reasoning model for tactics and recaps. `azd up` creates the Foundry account, the project and both model deployments. Prompts are versioned in `agents/prompts/*.md`. The eval harness compares a **single agent vs the multi-agent pipeline** on numeric accuracy, latency and cost. | `agents/llm.py`, `infra/resources.bicep`, `evals.py` | Wired (offline fallback Verified) |
+| **Microsoft Foundry** | `FoundryChatClient` with Entra ID, in **two tiers**: a fast model (explain, narrate, personalise) and a reasoning model (tactics, recaps). **Managed agents**: `foundry_ops register` publishes every prompt as a versioned Foundry prompt agent, and `FOUNDRY_HOSTED_AGENTS=true` runs them through `FoundryAgent`, so prompts and models are tuned, versioned and rolled back in the Foundry portal without redeploying. **Evaluations**: `foundry_ops evaluate` scores a single-agent baseline and the Explainer with Foundry's groundedness, relevance, coherence and task-adherence evaluators, plus the Guardian as a custom evaluator. Results appear in the portal. **Spend control**: a per-match budget sends agents to verified templates once reached. `azd up` creates the account, the project and both model deployments. | `agents/llm.py`, `foundry_ops.py`, `infra/resources.bicep` | Guardian evaluator, budget and fallback Verified · portal runs Wired |
 | **MCP** | `touchline-mcp` exposes 10 tools (match_state, key_moments, events, player, fact, ask, agent_status, generate_match, …) to GitHub Copilot, Claude or any MCP client. It runs over stdio or streamable HTTP as its own Container App. | `mcp_server.py`, `.vscode/mcp.json` | Verified |
 | **Azure Event Hubs** | Live event ingest, partitioned per match. The consumer attaches before the feed starts so no event is lost. A `fabric` consumer group feeds analytics. | `live/bus.py` | Wired (local bus Verified) |
 | **Azure Container Apps (+ Jobs)** | `app` (API + web), `mcp` (scales to zero), and a **Job** that regenerates the 380-match season on demand. Health probes, user-assigned managed identity, pulls from ACR without keys. | `infra/resources.bicep` | Wired (Bicep compiles Verified) |
@@ -85,15 +128,16 @@ The **Status** column is precise:
 | **Azure AI Content Safety** | Screens every published sentence and every watch-party chat message. A local block list always applies too. | `azure_services.py`, `live/party.py` | Wired (local screen Verified) |
 | **Azure AI Translator** | Any-language localisation. Player and club names are wrapped in `notranslate` so they are never translated. | `azure_services.py`, `Persona` | Wired |
 | **Azure AI Search** | Season memory: one document per player per matchday, so the Memory agent can answer "league goals before kick-off" with a single key lookup. | `search_index.py`, `MemoryAgent` | Wired (local store Verified) |
-| **Azure Logic Apps** | Distributes the full-time recap, for example to a Microsoft Teams channel. | `infra/resources.bicep`, `session._distribute` | Wired |
+| **Azure Functions** | Flex Consumption app with three functions. An **Event Hubs trigger** (its own consumer group) archives every match event to a Cosmos DB `events` container and notifies the Logic App at half time and full time. A **timer trigger** starts the season-regeneration Container Apps Job nightly. An **HTTP** health probe. All bindings are keyless (managed identity). | `functions/`, `infra/resources.bicep` | Bindings Verified · cloud run Wired |
+| **Azure Logic Apps** | Distributes the full-time recap and phase notifications, for example to a Microsoft Teams channel. | `infra/resources.bicep`, `session._distribute`, `functions/` | Wired |
 | **Microsoft Fabric** | Eventstream (Event Hubs, `fabric` group) → Eventhouse. The KQL queryset covers pass completion, pressing maps, a shot-speed leaderboard and turnover rate. | `infra/fabric/queries.kql` | Wired |
 | **Application Insights / Azure Monitor** | OpenTelemetry for agents, workflows and the API. The Control Room shows the same data live: calls, latency, tokens, cost, rejections and fallbacks. | `telemetry.py` | Wired (Control Room Verified) |
 | **Microsoft Entra ID** | Keyless managed identity for every Azure service. **Sign in with Microsoft** (MSAL) for the watch party. | `infra/`, `web/components/WatchParty.tsx` | Wired (needs an app registration id) |
-| **GitHub Copilot / Actions / CLI** | `.github/copilot-instructions.md`, a reusable prompt file and an MCP config for Copilot agent mode. The CI workflow runs lint, tests, eval, the web build and a Bicep build. Deploy uses OIDC (no secrets). A dataset release workflow publishes the season with `gh release`. | `.github/` | Verified files · Wired runs on push |
+| **GitHub Copilot / Actions / CLI** | A **Copilot custom agent** (`.github/agents/touchline-analyst.agent.md`) that works alongside the live agents over MCP. Also `.github/copilot-instructions.md`, a reusable prompt file and an MCP config for Copilot agent mode. The CI workflow runs lint, tests, eval, the web build and a Bicep build. Deploy uses OIDC (no secrets). A dataset release workflow publishes the season with `gh release`. | `.github/` | Verified files · Wired runs on push |
 
 ---
 
-## 3. The multi-agent system
+## 4. The multi-agent system
 
 ```mermaid
 flowchart LR
@@ -137,7 +181,7 @@ The Control Room's **chaos test** can take an agent offline or make the Explaine
 
 ![Control room](docs/images/control.png)
 
-## 4. The fan experience
+## 5. The fan experience
 
 - **3D stadium.** Animated human players in kits are driven by the tracking feed and kick the ball with a real leg swing.
   - The ball rolls on short passes, arcs on long balls, crosses and clearances, and stays at the dribbler's feet.
@@ -146,7 +190,7 @@ The Control Room's **chaos test** can take an agent offline or make the Explaine
 - **Sound.** Spoken commentary is emotional for goals, equalisers and comebacks, and deflated when the home side concedes. Synthesised crowd voices react from the home fans' point of view with roars, groans, "oooh"s, boos, applause and clapping chants. The referee's whistle sounds for fouls, kick-offs, half time and full time. All audio is generated, so there are no third-party recordings.
 - **Watch party (multiplayer).** Fans sign in with Microsoft or as a guest, chat (safety-screened), throw emoji reactions into the stadium, and predict who scores next. Live goals settle each round and update the leaderboard.
 
-## 5. Run it
+## 6. Run it
 
 ```bash
 python -m venv .venv && .venv/Scripts/pip install -e "./backend[dev]"
@@ -160,12 +204,12 @@ cd backend && ../.venv/Scripts/python -m touchline.cli serve        # http://loc
 **Tests**
 ```bash
 cd backend
-../.venv/Scripts/python -m pytest -q                 # 24 unit + integration tests
-../.venv/Scripts/python tests/e2e/run_e2e.py         # 80 end-to-end checks on a fresh server → docs/e2e/report.md
+../.venv/Scripts/python -m pytest -q                 # 29 unit + integration tests
+../.venv/Scripts/python tests/e2e/run_e2e.py         # 83 end-to-end checks on a fresh server → docs/e2e/report.md
 ../.venv/Scripts/python -m touchline.cli eval        # realism + grounding (+ single vs multi-agent with a model)
 ```
 
-## 6. Repository
+## 7. Repository
 
 ```
 touchline/
@@ -184,15 +228,17 @@ touchline/
 │   │   ├── a2a_server.py     A2A agent card and endpoint
 │   │   ├── season.py         380-match season generator and memory
 │   │   ├── evals.py          realism, grounding, single vs multi-agent
+│   │   ├── foundry_ops.py    Foundry managed agents and evaluations
 │   │   └── telemetry.py      OpenTelemetry and Agent Framework instrumentation
 │   └── tests/
 │       ├── test_*.py         unit and integration tests
-│       └── e2e/run_e2e.py    end-to-end suite (80 checks)
+│       └── e2e/run_e2e.py    end-to-end suite (83 checks)
 ├── web/
 │   ├── app/                  landing, live, overlay, control, recap, studio pages
 │   ├── components/           3D stadium, overlay renderer, feeds, watch party
 │   ├── lib/                  API client, live match hook, audio engine, types
 │   └── public/models/        animated 3D player model
+├── functions/                Azure Functions: event archive, phase alerts, nightly season job
 ├── infra/
 │   ├── main.bicep            subscription entry point for azd
 │   ├── resources.bicep       every Azure resource, keyless
@@ -204,13 +250,14 @@ touchline/
 │   └── images/               screenshots
 ├── .github/
 │   ├── workflows/            ci, deploy, dataset-release
+│   ├── agents/               GitHub Copilot custom agent
 │   ├── prompts/              Copilot prompt files
 │   └── copilot-instructions.md
 ├── Dockerfile
 └── azure.yaml
 ```
 
-## 7. Responsible AI
+## 8. Responsible AI
 - **Synthetic, fictional data only.** No real footage, clubs, players or league marks. Sponsors are Microsoft's fictional sample brands.
 - **Models never produce numbers.** The Guardian blocks any figure that is not traced to a verified fact, and that applies to human edits too.
 - **Human in the loop.** Producers can require sign-off on high-stakes moments.
