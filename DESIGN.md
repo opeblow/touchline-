@@ -1,7 +1,7 @@
 # TOUCHLINE — Design Direction
 
 **Look:** editorial sports broadcast, not "AI startup". Think of a printed match programme combined with a broadcast graphics package.
-**Banned:** purple, neon gradients, glassmorphism blobs, dark-mode-by-default, sparkle ✨ icons, "Powered by AI" badges everywhere.
+**Banned:** purple, neon gradients, glassmorphism blobs, dark-mode-by-default, sparkle icons, "Powered by AI" badges everywhere.
 
 ---
 
@@ -87,5 +87,5 @@ Open these and screenshot what you like. Drop the screenshots into `design/refs/
 
 ## 6. Rules
 - Show real (synthetic) data everywhere. No lorem ipsum, no fake charts.
-- Every AI sentence has a small citation chip, for example `⌁ 3 facts`, that reveals the underlying events.
+- Every AI sentence has a small citation chip, for example `F12`, that reveals the underlying events.
 - Mobile works for the Match Center and Recap. Overlay and Control Room are desktop-only.
