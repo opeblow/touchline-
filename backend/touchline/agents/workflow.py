@@ -1,10 +1,10 @@
 """Microsoft Agent Framework workflow for one key moment.
 
-    Memory ──▶ Explainer ──▶ Guardian ──(approved)──▶ Persona/Localizer ──▶ Publisher
-       │           ▲            │
+    Memory ──> Explainer ──> Guardian ──(approved)──> Persona/Localizer ──> Publisher
+       │           ^            │
        │           └─(rejected)─┘   (one rewrite with Guardian feedback, then a
        │                              verified template — never an unchecked text)
-       └──▶ Narrator ──▶ Guardian ──(approved)──▶ Publisher
+       └──> Narrator ──> Guardian ──(approved)──> Publisher
 
 Agents share state through the Match Blackboard and hand off typed messages
 along the edges. A fresh workflow instance is built per moment, so moments are
