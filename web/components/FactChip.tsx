@@ -28,7 +28,7 @@ export default function FactChip({ matchId, factId, fact }: { matchId: string; f
   return (
     <span ref={ref} style={{ position: "relative" }}>
       <button className="chip cite" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={label}>
-        <span aria-hidden>⌁</span> {factId}
+        {factId}
       </button>
       {open && (
         <span className="popover" role="dialog" style={{ top: 30, left: 0 }}>
