@@ -136,7 +136,7 @@ function Control() {
                   await control("start", 8);
                 }}
               >
-                ▶ Run match
+                Run match
               </button>
             )}
           </div>
