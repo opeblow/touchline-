@@ -70,6 +70,7 @@ class MatchSession:
             self.emit,
             clock=lambda: self.t,
             timeout_s=settings.llm_timeout_s,
+            budget_usd=settings.max_cost_per_match_usd,
         )
         translator = Translator(settings)
         self.guardian = Guardian(self.rt, self.stats, NameIndex(self.meta), ContentSafety(settings))
@@ -90,6 +91,8 @@ class MatchSession:
         self._sem = asyncio.Semaphore(4)
         self._tasks: set[asyncio.Task] = set()
         self._moment_tasks: set[asyncio.Task] = set()
+        self._moment_seen: dict[str, float] = {}
+        self.insight_latency_ms: list[float] = []
         self._resume = asyncio.Event()
         self._resume.set()
         self._task: asyncio.Task | None = None
@@ -173,7 +176,19 @@ class MatchSession:
             "model_reasoning": self.llm.model_name("reasoning"),
             "totals": self.rt.totals,
             "pending_moments": len(self._moment_tasks),
+            "llm_mode": self.llm.mode,
+            "budget_usd": self.rt.budget_usd,
+            "over_budget": self.rt.over_budget(),
+            "insight_latency_ms": self._latency(),
         }
+
+    def _latency(self) -> dict[str, float | int]:
+        """Moment detected → explained, verified, personalised and published (wall-clock)."""
+        xs = sorted(self.insight_latency_ms)
+        if not xs:
+            return {"n": 0, "p50": 0.0, "p95": 0.0}
+        pick = lambda q: round(xs[min(len(xs) - 1, int(q * len(xs)))], 1)  # noqa: E731
+        return {"n": len(xs), "p50": pick(0.5), "p95": pick(0.95)}
 
     def _spawn(self, coro, moment: bool = False) -> asyncio.Task:
         task = asyncio.create_task(coro)
@@ -284,6 +299,7 @@ class MatchSession:
         for mo in moments:
             self.moments.append(mo)
             await self.blackboard.put("moment", mo.moment_id, mo)
+            self._moment_seen[mo.moment_id] = time.perf_counter()
             await self._send("moment", mo.model_dump(mode="json"), t=mo.t)
             await self.rt.trace(
                 "spotter",
@@ -422,6 +438,10 @@ class MatchSession:
             ins = item.insight
             moment = item.job.ctx.moment
             self.insights[moment.moment_id] = ins.text
+            if moment.moment_id in self._moment_seen:
+                self.insight_latency_ms.append(
+                    (time.perf_counter() - self._moment_seen.pop(moment.moment_id)) * 1000
+                )
             await self.blackboard.put("insight", ins.insight_id, ins)
             await self._send(
                 "insight",
