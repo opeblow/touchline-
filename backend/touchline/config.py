@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_base_url: str | None = None
     llm_timeout_s: float = 12.0
+    # Use the versioned prompt agents published to Foundry (python -m touchline.foundry_ops register)
+    foundry_hosted_agents: bool = False
+    # Enterprise controls
+    max_cost_per_match_usd: float = (
+        2.0  # model spend cap per match; agents fall back to verified templates beyond it
+    )
+    control_api_key: str | None = None  # when set, control actions require header x-touchline-key
+    ask_rate_per_minute: int = 20
+    chat_min_interval_s: float = 1.0
     # USD per 1K tokens, used for the cost-per-match readout in the Control Room
     price_fast_in: float = 0.0004
     price_fast_out: float = 0.0016
